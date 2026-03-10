@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Solvix</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#00e5b8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Solvix">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@500;700;800&family=JetBrains+Mono:wght@500&display=block">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@500;700;800&family=JetBrains+Mono:wght@500&display=block">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="profile.css">
+  <link rel="stylesheet" href="chat.css">
+  <link rel="stylesheet" href="calls.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<div id="qrOverlay">
+  <video id="qrVideo" autoplay playsinline muted></video>
+  <canvas id="qrCanvas" style="display:none"></canvas>
+  <div class="qr-topbar">
+    <div class="qr-title">Scan QR Code</div>
+    <button class="qr-close-btn" onclick="closeQrScanner()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="qr-viewfinder">
+    <div class="qr-frame" id="qrFrame">
+      <div class="qr-corner tl"></div>
+      <div class="qr-corner tr"></div>
+      <div class="qr-corner bl"></div>
+      <div class="qr-corner br"></div>
+      <div class="qr-scan-line"></div>
+    </div>
+  </div>
+  <div class="qr-bottom">
+    <div class="qr-status" id="qrStatus"></div>
+    <div class="qr-hint">ফোন নম্বর বা username-এর QR কোড ক্যামেরায় ধরুন</div>
+    <button class="qr-flash-btn" id="qrFlashBtn" onclick="toggleQrFlash()" style="display:none">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      Flashlight
+    </button>
+  </div>
+</div>
+
+<div id="cropOverlay" onclick="handleCropOverlayClick(event)">
+  <div class="crop-sheet">
+    <div class="crop-header">
+      <button class="crop-tb-cancel" onclick="closeCrop()">Cancel</button>
+      <div class="crop-tb-title" id="cropTitle">Crop Photo</div>
+      <button class="crop-tb-done" onclick="applyCrop()">Done ✓</button>
+    </div>
+    <div class="crop-stage" id="cropStage">
+      <canvas id="cropCanvas"></canvas>
+    </div>
+    <div class="crop-footer">
+      <div class="crop-zoom-wrap">
+        <svg class="crop-zoom-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="range" id="cropZoom" min="100" max="400" value="100" oninput="onCropZoom(this.value)">
+        <svg class="crop-zoom-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        <div class="crop-zoom-val" id="cropZoomVal">1×</div>
+      </div>
+      <div class="crop-tip">ছবি টেনে সরান • স্লাইড করে জুম করুন • পিঞ্চ করেও জুম হবে</div>
+    </div>
+  </div>
+</div>
+
+<div id="splash">
+  <div class="splash-logo-box">
+    <svg width="46" height="46" viewBox="0 0 24 24" fill="var(--accent)"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
+  </div>
+  <div class="splash-title">Solvix</div>
+  <div class="splash-tagline">
+    <div style="width:28px;height:1px;background:linear-gradient(90deg,transparent,var(--accent))"></div>
+    <span style="font-size:10px;color:var(--t2);letter-spacing:2.5px;text-transform:uppercase;font-weight:500">Crystal Clear Voice</span>
+    <div style="width:28px;height:1px;background:linear-gradient(90deg,var(--accent),transparent)"></div>
+  </div>
+  <div class="splash-loader">
+    <div class="splash-dot"></div><div class="splash-dot"></div><div class="splash-dot"></div>
+  </div>
+</div>
+
+<div id="landing-page" style="opacity:0;transition:opacity .3s var(--ease-smooth)">
+
+  <button id="landingBackBtn" class="landing-back-btn hidden" onclick="landingBack()">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+      <path d="M19 12H5M12 19l-7-7 7-7"/>
+    </svg>
+  </button>
+
+  <div class="landing-login-wrap">
+
+    
+    <div id="landingLogo" style="text-align:center;margin-bottom:28px">
+      <div style="display:inline-flex;align-items:center;justify-content:center;width:80px;height:80px;background:linear-gradient(135deg,rgba(0,229,184,0.18),rgba(0,136,255,0.15));border:1px solid var(--border2);border-radius:26px;margin-bottom:18px;box-shadow:0 0 40px rgba(0,229,184,0.12),0 8px 32px rgba(0,0,0,0.4)">
+        <svg width="42" height="42" viewBox="0 0 24 24" fill="var(--accent)"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
+      </div>
+      <div style="font-size:46px;font-weight:800;letter-spacing:-3px;line-height:1;background:linear-gradient(135deg,var(--accent),var(--accent2),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent">Solvix</div>
+      <div style="margin-top:10px;display:flex;align-items:center;justify-content:center;gap:6px">
+        <div style="width:28px;height:1px;background:linear-gradient(90deg,transparent,var(--accent))"></div>
+        <span style="font-size:12px;color:var(--t2);letter-spacing:2.5px;text-transform:uppercase;font-weight:500">Crystal Clear Voice</span>
+        <div style="width:28px;height:1px;background:linear-gradient(90deg,var(--accent),transparent)"></div>
+      </div>
+    </div>
+
+    
+    <div id="ls1">
+      <div class="fg-wrap">
+        <input type="tel" class="fg" id="lpi" placeholder=" " maxlength="14" inputmode="tel"
+          oninput="formatPhone(this)" onkeydown="if(event.key==='Enter')landingCheckPhone()">
+        <span class="fg-lbl">Mobile Number</span>
+      </div>
+      <div id="ls1err" class="err-box"></div>
+      <button class="btn btn-p" id="lpb" onclick="landingCheckPhone()">Next
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+
+    
+    <div id="ls2" class="hidden">
+      <div class="phone-found">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+        <span id="llpd"></span>
+      </div>
+      <div class="fg-wrap">
+        <input type="password" class="fg" id="llp" placeholder=" " style="padding-right:50px">
+        <span class="fg-lbl">Password</span>
+        <button type="button" class="pw-eye-btn" onclick="togglePwVis('llp',this)" tabindex="-1">
+          <svg class="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+      <div id="ls2err" class="err-box"></div>
+      <div class="forgot"><a id="forgotLink" onclick="landingForgot()">Forgot password?</a></div>
+      <button class="btn btn-p" id="llb" onclick="landingLogin()">Sign In</button>
+    </div>
+
+    
+    <div id="ls3" class="hidden" style="padding-top:20px">
+      <div style="display:flex;justify-content:center;margin-bottom:20px;margin-top:32px">
+        <div style="position:relative;cursor:pointer" onclick="$('regAvatarInput').click()">
+          <div id="regAvCircle" style="width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;border:3px solid var(--border2);overflow:hidden;box-shadow:0 4px 24px rgba(0,229,184,0.2)">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#050810" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div style="position:absolute;bottom:2px;right:2px;width:26px;height:26px;border-radius:50%;background:var(--card2);border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.3)">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </div>
+        </div>
+      </div>
+      <input type="file" id="regAvatarInput" accept="image/*" style="display:none" onchange="handleAvatarSelect(this)">
+      <div class="fg-wrap">
+        <input type="text" class="fg" id="lrn" placeholder=" ">
+        <span class="fg-lbl">Your Name</span>
+      </div>
+      <div class="fg-wrap">
+        <input type="text" class="fg" id="lruser" placeholder=" " style="padding-right:50px"
+          oninput="checkAvail('username',this.value)" autocomplete="off" autocapitalize="off" spellcheck="false">
+        <span class="fg-lbl">Username</span>
+        <span id="usernameStatus" class="field-status"></span>
+      </div>
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;font-weight:800;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Date of Birth</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:8px">
+          <div>
+            <input type="number" class="fg dob-field" id="dobDay" placeholder="DD" oninput="dobInput(this,'dobMonth',2,31)" onblur="dobBlur(this,1,31)">
+            <div style="font-size:10px;color:var(--t3);text-align:center;margin-top:4px;font-weight:600;letter-spacing:.5px">Day</div>
+          </div>
+          <div>
+            <input type="number" class="fg dob-field" id="dobMonth" placeholder="MM" oninput="dobInput(this,'dobYear',2,12)" onblur="dobBlur(this,1,12)">
+            <div style="font-size:10px;color:var(--t3);text-align:center;margin-top:4px;font-weight:600;letter-spacing:.5px">Month</div>
+          </div>
+          <div>
+            <input type="number" class="fg dob-field" id="dobYear" placeholder="YYYY" oninput="dobInput(this,null,4,new Date().getFullYear())" onblur="dobBlur(this,1900,new Date().getFullYear())">
+            <div style="font-size:10px;color:var(--t3);text-align:center;margin-top:4px;font-weight:600;letter-spacing:.5px">Year</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;font-weight:800;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Gender</div>
+        <div style="display:flex;gap:10px">
+          <div id="genderMale" onclick="selectGender('male')" class="gender-card">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--t2)" stroke-width="1.5" stroke-linecap="round"><circle cx="10" cy="14" r="5"/><line x1="19" y1="5" x2="14.14" y2="9.86"/><polyline points="15 5 19 5 19 9"/></svg>
+            <span style="font-size:13px;font-weight:700;color:var(--t2)">Male</span>
+          </div>
+          <div id="genderFemale" onclick="selectGender('female')" class="gender-card">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--t2)" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="9" r="5"/><line x1="12" y1="14" x2="12" y2="21"/><line x1="9" y1="18" x2="15" y2="18"/></svg>
+            <span style="font-size:13px;font-weight:700;color:var(--t2)">Female</span>
+          </div>
+        </div>
+      </div>
+      <div class="fg-wrap">
+        <input type="email" class="fg" id="lre" placeholder=" " style="padding-right:50px" inputmode="email" oninput="checkAvail('email',this.value)">
+        <span class="fg-lbl">Email Address</span>
+        <span id="emailStatus" class="field-status"></span>
+      </div>
+      <div class="fg-wrap">
+        <input type="password" class="fg" id="lrp" placeholder=" " style="padding-right:50px">
+        <span class="fg-lbl">Password (min. 6 characters)</span>
+        <button type="button" class="pw-eye-btn" onclick="togglePwVis('lrp',this)" tabindex="-1">
+          <svg class="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+      <div id="ls3err" class="err-box"></div>
+      <button class="btn btn-p" id="lrb" onclick="landingRegister()">Create Account</button>
+    </div>
+
+    
+    <div id="ls4" class="hidden">
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center">
+        <div style="position:relative;display:inline-block;margin-bottom:16px">
+          <div id="welcomeAv" style="width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:800;color:#050810;border:3px solid var(--border2);overflow:hidden;box-shadow:0 4px 24px rgba(0,229,184,0.2);margin:0 auto">
+            <span id="welcomeAvInitial">?</span>
+          </div>
+        </div>
+        <div style="font-size:11px;font-weight:800;color:var(--t3);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px" id="welcomeTag">Welcome back</div>
+        <div id="welcomeName" style="font-size:24px;font-weight:800;color:var(--text);margin-bottom:6px;letter-spacing:-0.5px">...</div>
+        <div id="welcomeUsername" style="font-size:13px;color:var(--t2);font-family:var(--mono);margin-bottom:20px"></div>
+        <div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:14px;margin-bottom:28px;width:100%;display:flex;flex-direction:column;gap:10px;text-align:left">
+          <div class="info-row"><div class="info-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg></div><div><div class="info-lbl">Phone</div><div id="welcomePhone" class="info-val" style="font-family:var(--mono)"></div></div></div>
+          <div class="info-divider"></div>
+          <div class="info-row"><div class="info-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div><div><div class="info-lbl">Email</div><div id="welcomeEmail" class="info-val" style="word-break:break-all"></div></div></div>
+        </div>
+        <button class="btn btn-p" onclick="onLoginSuccess()" style="width:100%;max-width:300px">
+          Get Started
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="home-page" class="hidden">
+  <div class="hdr">
+    <div class="hdr-logo" id="homeHdrLogo">Sol<span>vix</span></div>
+
+    <div id="homeSearchBar">
+      <div class="search-inner">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--t2)" stroke-width="2" stroke-linecap="round" style="flex-shrink:0">
+          <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <input type="text" id="searchInput" placeholder="Phone number or @username..."
+          autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="30"
+          oninput="onSearchInput(this)"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();doSearch()}">
+        <span id="searchTypeHint" class="search-type-hint"></span>
+      </div>
+      <button class="search-go-btn" onclick="doSearch()">Search</button>
+    </div>
+
+    <div class="hdr-acts" id="homeHdrActs">
+      <button class="ibtn" id="homeRefreshBtn" onclick="doRefresh()" data-tip="Refresh">
+        <svg id="refreshIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+      </button>
+      <button class="ibtn" onclick="doQrScan()" data-tip="Scan QR">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 7V3h-4M1 7V3h4M23 17v4h-4M1 17v4h4"/>
+          <rect x="7" y="7" width="4" height="4" rx=".5"/>
+          <rect x="13" y="7" width="4" height="4" rx=".5"/>
+          <rect x="7" y="13" width="4" height="4" rx=".5"/>
+          <path d="M13 13h1v1h-1zM15 15h2v2h-2zM13 17h1v1h-1z"/>
+        </svg>
+      </button>
+      <button class="ibtn" id="homeSearchBtn" onclick="toggleSearch()" data-tip="Search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+        </svg>
+      </button>
+      <button class="ibtn" onclick="toggleTheme()" data-tip="Theme">
+        <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+      <button class="ibtn ibtn-logout" onclick="showLogoutConfirm()" data-tip="Log Out">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  
+  <div id="mainContent">
+    <div id="chatListContainer"></div>
+    <div id="callsListContainer" style="display:none"></div>
+    <div id="profilePageContent" style="display:none"></div>
+    <div id="adminPanelWrap"></div>
+  </div>
+</div>
+
+<div id="chatScreen"></div>
+
+<div id="callScreen"></div>
+
+<div id="incomingCallBanner"></div>
+
+<div class="tab-bar hidden" id="tabBar">
+  <div class="tab-item active" id="tab-calls" onclick="switchTab('calls')">
+    <div class="tab-ic-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+    </div>
+    <span class="tab-label">Chats</span>
+  </div>
+  <div class="tab-item" id="tab-callhistory" onclick="switchTab('callhistory')">
+    <div class="tab-ic-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round">
+        <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/>
+      </svg>
+    </div>
+    <span class="tab-label">Calls</span>
+  </div>
+  <div class="tab-item" id="tab-profile" onclick="switchTab('profile')">
+    <div class="tab-ic-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+    </div>
+    <span class="tab-label">Profile</span>
+  </div>
+  <div class="tab-item tab-admin hidden" id="tab-admin" onclick="switchTab('admin')">
+    <div class="tab-ic-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z"/>
+        <polyline points="9 12 11 14 15 10"/>
+      </svg>
+    </div>
+    <span class="tab-label">Admin</span>
+  </div>
+</div>
+
+<div id="profileOverlay"></div>
+<div id="profileSheet">
+  
+</div>
+
+<div id="logoutOverlay" onclick="handleLogoutOverlayClick(event)">
+  <div id="logoutModal">
+    <div class="logout-modal-icon">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+    </div>
+    <div class="logout-modal-title">Log Out?</div>
+    <div class="logout-modal-sub">আপনি কি সত্যিই লগ আউট করতে চান?<br>আবার লগইন করতে হবে।</div>
+    <div class="logout-modal-user" id="logoutUserRow">
+      <div class="logout-modal-av" id="logoutAv"></div>
+      <div>
+        <div class="logout-modal-uname" id="logoutName">—</div>
+        <div class="logout-modal-uhandle" id="logoutHandle">—</div>
+      </div>
+    </div>
+    <div class="logout-btns">
+      <button class="logout-btn-cancel" onclick="hideLogoutConfirm()">Cancel</button>
+      <button class="logout-btn-confirm" id="logoutConfirmBtn" onclick="doLogout()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        Log Out
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="editProfileOverlay" onclick="handleEditOverlayClick(event)">
+  <div id="editProfileModal">
+    <div class="edit-modal-header">
+      <button class="edit-modal-cancel" onclick="closeEditProfile()">Cancel</button>
+      <div class="edit-modal-title">Edit Profile</div>
+      <div style="width:60px"></div>
+    </div>
+    <div class="edit-modal-body">
+      
+      <div class="edit-av-wrap">
+        <div class="edit-av-circle" id="editAvCircle" onclick="$('editAvatarInput').click()">
+          <div class="edit-av-overlay">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </div>
+        </div>
+        <div id="editNamePreview" class="edit-name-preview"></div>
+        <div id="editUsernamePreview" class="edit-username-preview"></div>
+      </div>
+      <input type="file" id="editAvatarInput" accept="image/*" style="display:none" onchange="handleEditAvatarSelect(this)">
+
+      
+      <div class="edit-settings-menu">
+        <button class="edit-settings-row" onclick="openEditSection('account')">
+          <div class="esr-left">
+            <div class="esr-icon" style="background:rgba(0,229,184,0.12);border-color:rgba(0,229,184,0.2)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <div class="esr-text">
+              <div class="esr-title">Account Info</div>
+              <div class="esr-sub">Name, username, email, gender, bio</div>
+            </div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+
+        <button class="edit-settings-row" onclick="openEditSection('address')">
+          <div class="esr-left">
+            <div class="esr-icon" style="background:rgba(0,136,255,0.12);border-color:rgba(0,136,255,0.2)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            </div>
+            <div class="esr-text">
+              <div class="esr-title">Address</div>
+              <div class="esr-sub">বর্তমান ও স্থায়ী ঠিকানা</div>
+            </div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+
+        <button class="edit-settings-row" onclick="openEditSection('social')">
+          <div class="esr-left">
+            <div class="esr-icon" style="background:rgba(168,85,247,0.12);border-color:rgba(168,85,247,0.2)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+            </div>
+            <div class="esr-text">
+              <div class="esr-title">Social Media</div>
+              <div class="esr-sub">Facebook, Instagram, TikTok ইত্যাদি</div>
+            </div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+
+        <button class="edit-settings-row" onclick="openEditSection('privacy')" style="border-bottom:none">
+          <div class="esr-left">
+            <div class="esr-icon" style="background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.2)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <div class="esr-text">
+              <div class="esr-title">Privacy Settings</div>
+              <div class="esr-sub">কে কী দেখতে পাবে</div>
+            </div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="editSectionSheet">
+  <div class="edit-section-topbar">
+    <button class="profile-page-back" onclick="closeEditSection()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    </button>
+    <div class="edit-section-topbar-title" id="editSectionTitle"></div>
+    <button class="edit-modal-cancel" id="editSectionSaveBtn" style="color:var(--accent)" onclick="saveEditSection()">Save</button>
+  </div>
+  <div class="edit-section-body" id="editSectionBody"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="app.js"></script>
+<script src="profile.js"></script>
+<script src="chat.js"></script>
+<script src="calls.js"></script>
+<script src="admin.js"></script>
+<script src="notifications.js"></script>
+
+</body>
+</html>
